@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>수학 RPG – 원 · 원기둥 · 원뿔 · 구 월드</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 8px 14px;
+      background: #020617;
+      border-bottom: 1px solid #1f2937;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #hud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .hud-item {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .hp-bar {
+      width: 100px;
+      height: 8px;
+      border-radius: 999px;
+      background: #374151;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin: 0 4px;
+    }
+    .hp-fill {
+      width: 100%;
+      height: 100%;
+      background: #f97373;
+      transition: width 0.15s;
+    }
+    main {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+    .card {
+      width: 100%;
+      max-width: 980px;
+      background: #020617;
+      border-radius: 18px;
+      border: 1px solid #1f2937;
+      padding: 20px;
+      box-shadow: 0 24px 60px rgba(15,23,42,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    h1,h2,h3 { margin: 0; }
+    .subtitle {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #f9fafb;
+      transition: background 0.1s, transform 0.05s;
+    }
+    button:hover { background: #1d4ed8; transform: translateY(-1px); }
+    button.secondary {
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+    button.secondary:hover { background: #020617; }
+    button.small {
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid #374151;
+      padding: 7px 10px;
+      color: #e5e7eb;
+      font-size: 13px;
+      resize: vertical;
+    }
+    textarea { min-height: 70px; }
+    .world-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .world-node {
+      background: #020617;
+      border-radius: 14px;
+      border: 1px solid #1f2937;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .world-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .world-status {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid #374151;
+      background: #020617;
+    }
+    .badge.green { border-color: #10b981; color:#a7f3d0; }
+    .badge.yellow { border-color: #facc15; color:#fef3c7; }
+    .question-box {
+      border-radius: 12px;
+      border: 1px solid #374151;
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      background: #020617;
+    }
+    .log {
+      font-size: 11px;
+      color: #9ca3af;
+      max-height: 110px;
+      overflow-y: auto;
+      border-top: 1px solid #1f2937;
+      padding-top: 6px;
+    }
+
+    .field {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      height: 360px;
+      margin-top: 6px;
+      border-radius: 16px;
+      border: 1px solid #111827;
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      overflow: hidden;
+    }
+    .player {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: linear-gradient(135deg,#22c55e,#059669);
+      border: 2px solid #bbf7d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+    .player::after {
+      content: "P";
+      color:#022c22;
+      font-weight: 700;
+    }
+    .monster {
+      position: absolute;
+      border-radius: 999px;
+      border: 2px solid #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color:#020617;
+      transition: transform 0.1s, filter 0.1s;
+    }
+    .monster.easy {
+      width: 32px; height: 32px;
+      background: radial-gradient(circle,#bfdbfe,#60a5fa);
+      border-color:#1d4ed8;
+    }
+    .monster.mid {
+      width: 38px; height: 38px;
+      background: radial-gradient(circle,#e9d5ff,#a855f7);
+      border-color:#7c3aed;
+    }
+    .monster.hard {
+      width: 44px; height: 44px;
+      background: radial-gradient(circle,#fecaca,#f97373);
+      border-color:#ef4444;
+    }
+    .monster.boss {
+      width: 56px; height: 56px;
+      background: radial-gradient(circle,#fef3c7,#facc15);
+      border-color:#fbbf24;
+      box-shadow: 0 0 20px rgba(250,204,21,0.6);
+    }
+    .monster.dead {
+      filter: grayscale(1) brightness(0.4);
+    }
+    .monster-label {
+      position: absolute;
+      bottom: -14px;
+      font-size: 10px;
+      color:#e5e7eb;
+      white-space: nowrap;
+    }
+    .hint {
+      font-size: 11px;
+      color:#9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><strong>수학 RPG – 원 · 원기둥 · 원뿔 · 구 월드</strong></div>
+    <div id="hud">
+      <div class="hud-item">닉네임: <span id="hudName">-</span></div>
+      <div class="hud-item">
+        HP
+        <span class="hp-bar"><span id="hpFill" class="hp-fill"></span></span>
+        <span id="hpText">20/20</span>
+      </div>
+      <div class="hud-item">점수: <span id="hudScore">0</span></div>
+      <div class="hud-item">100나래: <span id="hudN100">0</span></div>
+      <div class="hud-item">200나래: <span id="hudN200">0</span></div>
+      <div class="hud-item">특별 아이템: <span id="hudSpecial">0</span></div>
+      <div class="hud-item">
+        HP 물약: <span id="hudPotion">0</span>
+        <button class="secondary small" onclick="usePotion()">사용</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="card" id="screen"></div>
+  </main>
+
+  <script>
+    // ---------- 상태 ----------
+    const state = {
+      name: "",
+      hp: 20,
+      maxHp: 20,
+      score: 0,
+      n100: 0,
+      n200: 0,
+      special: 0,
+      hpPotion: 0,
+      worldProgress: {},
+      currentWorldId: null,
+      stage: null, // 'intro' | 'map' | 'quest' | 'field' | 'battle'
+      log: [],
+      timerId: null,
+      lastTick: null,
+      player: { x: 100, y: 180, step: 14 },
+      monsters: [],
+      waveTemplates: null, // {easy:[], mid:[], hard:[], boss:{}}
+      currentWave: null, // 'easy' | 'mid' | 'hard' | 'boss'
+      battle: null // {monsterId,isBoss,tier,questions,index}
+    };
+
+    // ---------- 유틸 ----------
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    function logMsg(msg) {
+      state.log.unshift(msg);
+      if (state.log.length > 25) state.log.pop();
+      const el = document.getElementById("logArea");
+      if (el) el.innerHTML = state.log.map(x=>"• "+x).join("<br>");
+    }
+    function updateHUD() {
+      document.getElementById("hudName").textContent = state.name || "-";
+      document.getElementById("hudScore").textContent = state.score;
+      document.getElementById("hudN100").textContent = state.n100;
+      document.getElementById("hudN200").textContent = state.n200;
+      document.getElementById("hudSpecial").textContent = state.special;
+      document.getElementById("hudPotion").textContent = state.hpPotion;
+      const ratio = Math.max(0, Math.min(1, state.hp/state.maxHp));
+      document.getElementById("hpText").textContent = state.hp+"/"+state.maxHp;
+      document.getElementById("hpFill").style.width = (ratio*100)+"%";
+    }
+    function resetStats() {
+      state.hp = state.maxHp;
+      state.score = 0;
+      state.n100 = 0;
+      state.n200 = 0;
+      state.special = 0;
+      state.hpPotion = 0;
+      updateHUD();
+    }
+    function damage(amount, reason) {
+      state.hp = Math.max(0, state.hp - amount);
+      if (reason) logMsg(reason);
+      updateHUD();
+      if (state.hp <= 0) {
+        alert("HP가 0이 되어 월드 맵으로 돌아갑니다.\n획득한 점수와 아이템이 초기화됩니다.");
+        resetStats();
+        stopTimer();
+        showWorldMap();
+      }
+    }
+
+    function rewardNormalKill(tier) {
+      const scoreByTier = {easy:1, mid:2, hard:3};
+      const pts = scoreByTier[tier] || 1;
+      state.score += pts;
+      logMsg(`몬스터 처치! +${pts}점`);
+
+      // 드랍: HP물약 20%, 100나래 20%, 200나래 10%
+      const r = Math.random();
+      if (r < 0.2) {
+        state.hpPotion++;
+        logMsg("HP 물약을 획득했습니다! (클릭해서 사용 가능)");
+      } else if (r < 0.4) {
+        state.n100++;
+        logMsg("100나래를 획득했습니다!");
+      } else if (r < 0.5) {
+        state.n200++;
+        logMsg("200나래를 획득했습니다!");
+      }
+      updateHUD();
+    }
+    function rewardBossKill() {
+      state.score += 5;
+      state.special++;
+      logMsg("보스를 처치했습니다! +5점, 특별 아이템을 획득했습니다!");
+      updateHUD();
+    }
+
+    function usePotion() {
+      if (state.hpPotion <= 0) {
+        alert("사용할 HP 물약이 없습니다.");
+        return;
+      }
+      if (state.hp >= state.maxHp) {
+        alert("이미 HP가 가득 찼습니다.");
+        return;
+      }
+      state.hpPotion--;
+      state.hp = Math.min(state.maxHp, state.hp + 3);
+      logMsg("HP 물약 사용! HP가 3 회복되었습니다.");
+      updateHUD();
+    }
+    window.usePotion = usePotion;
+
+    // ---------- 월드 데이터 ----------
+    const WORLDS = [
+      {
+        id:"w2",
+        title:"WORLD 2 – 원주와 지름",
+        big:"원주율 = 원주 ÷ 지름이라는 관계는 무엇을 가능하게 할까?",
+        quest:[
+          "지름 4, 7, 10cm인 원의 원주를 구하고, 각각 '원주 ÷ 지름' 값을 적어 보세요.",
+          "위 결과를 보고, 원주율이 무엇을 의미하는지 설명해 보세요.",
+          "원주 = 지름×원주율, 지름 = 원주÷원주율의 구조와 관계를 말로 설명해 보세요."
+        ],
+        monsters: waveWorld2
+      },
+      {
+        id:"w3",
+        title:"WORLD 3 – 원의 넓이 어림",
+        big:"왜 원의 넓이는 정확한 값보다 어림으로 먼저 생각할 수 있을까?",
+        quest:[
+          "반지름이 5cm인 원을 한 변이 10cm인 정사각형 안에 넣었을 때, 원의 넓이가 정사각형 넓이보다 크거나 같은지, 작은지 설명해 보세요.",
+          "원을 잘게 나누어 직사각형처럼 배열하는 것이 넓이 어림에 도움이 되는 이유를 말해 보세요."
+        ],
+        monsters: waveWorld3
+      },
+      {
+        id:"w4",
+        title:"WORLD 4 – 원의 넓이 공식",
+        big:"원의 넓이 공식은 왜 반지름×반지름×원주율 구조일까?",
+        quest:[
+          "원을 잘게 나누어 붙였을 때 어떤 도형에 가까워지는지 설명해 보세요.",
+          "그 도형에서 가로와 세로가 각각 무엇에 해당하는지 말해 보세요."
+        ],
+        monsters: waveWorld4
+      },
+      {
+        id:"w5",
+        title:"WORLD 5 – 다양한 모양의 넓이",
+        big:"복잡한 도형도 기본 도형의 구조로 나눌 수 있을까?",
+        quest:[
+          "원을 포함한 도형을 넓이 계산이 쉬운 도형들로 나누는 방법을 예로 들어 보세요.",
+          "넓이를 구하는 순서를 어떻게 정하면 실수가 줄어드는지 설명해 보세요."
+        ],
+        monsters: waveWorld5
+      },
+      {
+        id:"w6",
+        title:"WORLD 6 – 실생활 속 원의 넓이(최종 보스)",
+        big:"왜 우리는 원의 넓이를 공식으로 만들어 실생활에 활용할까?",
+        quest:[
+          "원의 넓이를 계산해야 하는 실생활 상황을 한 가지 떠올려 설명해 보세요.",
+          "그 상황에서 넓이를 어림이 아니라 정확히 알아야 하는 이유를 적어 보세요."
+        ],
+        monsters: waveWorld6
+      },
+      {
+        id:"w7",
+        title:"WORLD 7 – 원기둥의 구성요소",
+        big:"원기둥은 어떤 평면도형이 어떻게 움직여서 만들어질까?",
+        quest:[
+          "원기둥의 밑면이 '서로 평행하고 합동인 두 원'이라는 말의 뜻을 설명해 보세요.",
+          "옆면을 펼쳤을 때 직사각형이 되고, 그 가로와 세로가 무엇을 나타내는지 적어 보세요."
+        ],
+        monsters: waveWorld7
+      },
+      {
+        id:"w8",
+        title:"WORLD 8 – 원뿔의 구성요소",
+        big:"같은 원인데, 왜 원기둥은 똑바르고 원뿔은 뾰족할까?",
+        quest:[
+          "원뿔의 밑면, 옆면, 꼭짓점을 각각 어떻게 설명할 수 있는지 적어 보세요.",
+          "원뿔에서 모선과 높이가 서로 어떻게 다른지 설명해 보세요."
+        ],
+        monsters: waveWorld8
+      },
+      {
+        id:"w9",
+        title:"WORLD 9 – 구의 구성요소",
+        big:"구에는 왜 밑면이나 옆면, 꼭짓점 같은 것이 없을까?",
+        quest:[
+          "구의 중심과 구의 반지름이 무엇을 의미하는지 설명해 보세요.",
+          "어떤 평면도형을 회전하면 구가 되는지, 그 이유와 함께 적어 보세요."
+        ],
+        monsters: waveWorld9
+      }
+    ];
+
+    // ---------- 각 월드 문제 템플릿 ----------
+    function waveWorld2() {
+      return {
+        easy: [
+          {
+            name: "초급 원슬라임 A",
+            tier: "easy",
+            makeQuestions: () => {
+              const d = randInt(4, 12);
+              return [{
+                q: `지름이 ${d}cm인 원의 원주는 얼마인가요? (원주율=3)`,
+                a: String(d * 3)
+              }];
+            }
+          },
+          {
+            name: "초급 원슬라임 B",
+            tier: "easy",
+            makeQuestions: () => {
+              const r = randInt(2, 8);
+              return [{
+                q: `반지름이 ${r}cm인 원의 원주는 얼마인가요? (원주율=3)`,
+                a: String(2 * r * 3)
+              }];
+            }
+          },
+          {
+            name: "초급 원슬라임 C",
+            tier: "easy",
+            makeQuestions: () => {
+              const d = randInt(3, 9);
+              const c = d * 3 + (Math.random() < 0.5 ? 0 : 1.5);
+              return [{
+                q: `어떤 원의 지름은 ${d}cm, 원주는 약 ${c.toFixed(1)}cm입니다. 원주÷지름 값은 약 얼마인가요? (정수로)`,
+                a: "3"
+              }];
+            }
+          }
+        ],
+        mid: [
+          {
+            name: "중급 원기사 A",
+            tier: "mid",
+            makeQuestions: () => {
+              const d = randInt(4, 12);
+              const c = d * 3;
+              return [{
+                q: `원주의 길이가 ${c}cm인 원의 지름은 몇 cm인가요? (원주율=3)`,
+                a: String(d)
+              }];
+            }
+          },
+          {
+            name: "중급 원기사 B",
+            tier: "mid",
+            makeQuestions: () => {
+              const d = randInt(4, 10);
+              const c = d * 3;
+              return [{
+                q: `지름이 ${d}cm인 원에 둘레를 따라 리본을 두르려고 합니다. 필요한 리본 길이는 몇 cm인가요? (겹치지 않게 한 번만 두른다, 원주율=3)`,
+                a: String(c)
+              }];
+            }
+          },
+          {
+            name: "중급 원기사 C",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "원주를 지름으로 나누었더니 항상 3쯤 되는 이유를 자신의 말로 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        hard: [
+          {
+            name: "고급 원마법사 A",
+            tier: "hard",
+            makeQuestions: () => {
+              const d1 = randInt(4, 8);
+              const d2 = randInt(9, 14);
+              const cDiff = (d2 - d1) * 3;
+              return [{
+                q: `지름이 ${d1}cm인 원과 ${d2}cm인 원이 있습니다. 두 원의 원주 차이는 몇 cm인가요? (원주율=3)`,
+                a: String(cDiff)
+              }];
+            }
+          },
+          {
+            name: "고급 원마법사 B",
+            tier: "hard",
+            makeQuestions: () => {
+              const c = randInt(24, 48);
+              const r = c / (2 * 3);
+              return [{
+                q: `길이가 ${c}cm인 리본으로 겹치지 않게 동그랗게 원을 만들었습니다. 이 원의 반지름은 몇 cm인가요? (원주율=3)`,
+                a: String(r)
+              }];
+            }
+          },
+          {
+            name: "고급 원마법사 C",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "원주율을 3으로 어림해서 쓰는 것이 왜 편리한지, 또 어떤 상황에서는 3.14를 쓰는 것이 더 좋은지 비교하여 적어 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "원-지름 왕",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "원주와 지름이 비례한다는 말의 의미를 '관계'라는 단어를 넣어 설명해 보세요.", a: "*" },
+            { q: "지름을 2배로 하면 원주는 어떻게 변하는지, 원주율과의 관계를 써 보세요.", a: "*" },
+            { q: "원주율 = 원주 ÷ 지름이 원들을 비교하는 데 왜 중요한지 설명해 보세요.", a: "*" },
+            { q: "실생활에서 원주의 길이를 알아야 하는 예를 하나 들고, 지름과의 구조를 연결해 설명해 보세요.", a: "*" },
+            { q: "원주와 지름의 관계를 한 문장으로 일반화해 보세요. (반드시 '구조', '관계' 단어 포함)", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld3() {
+      return {
+        easy: [
+          {
+            name: "초급 넓이슬라임 A",
+            tier: "easy",
+            makeQuestions: () => {
+              const s = randInt(4, 10);
+              return [{
+                q: `한 변이 ${s}cm인 정사각형 안에 꼭 맞게 원을 그렸습니다. 원의 넓이는 정사각형 넓이보다 크거나 같나요, 작나요? (크다/작다)`,
+                a: "작다"
+              }];
+            }
+          },
+          {
+            name: "초급 넓이슬라임 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원 안에 꼭 맞게 그린 정사각형과 원의 넓이를 비교하면, 어느 쪽이 더 넓나요? (원/정사각형 중 하나)",
+              a: "원"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 넓이슬라임 A",
+            tier: "mid",
+            makeQuestions: () => {
+              const inner = randInt(20, 40);
+              const outer = inner + randInt(5, 15);
+              return [{
+                q: `어떤 원 안에 있는 도형의 넓이가 약 ${inner}cm², 원 바깥 큰 도형의 넓이가 약 ${outer}cm²입니다. 이 원의 넓이를 어느 정도로 어림할 수 있을까요? (예: ${inner}와 ${outer} 사이의 값으로 대답)`,
+                a: "*"
+              }];
+            }
+          },
+          {
+            name: "중급 넓이슬라임 B",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "정육각형 여러 개를 붙여 원 넓이를 어림하는 방법을 설명해 보세요. 정육각형 넓이와 원 넓이의 관계 중심으로 적기.",
+              a: "*"
+            }]
+          }
+        ],
+        hard: [
+          {
+            name: "고급 넓이슬라임 A",
+            tier: "hard",
+            makeQuestions: () => {
+              const r = randInt(3, 8);
+              const bigger = 3 * r * r + randInt(3, 10);
+              const smaller = 3 * r * r - randInt(3, 10);
+              return [{
+                q: `반지름이 ${r}cm인 원의 넓이를 어림하려고 합니다. ${smaller}cm²와 ${bigger}cm² 중 어느 쪽이 더 알맞은 어림값인지 고르고, 그 이유를 써 보세요.`,
+                a: "*"
+              }];
+            }
+          },
+          {
+            name: "고급 넓이슬라임 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "원을 잘게 나누어 직사각형처럼 배열하면 왜 넓이를 어림하는 데 도움이 되는지, '구조'와 '관계'라는 단어를 넣어 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "어림의 대왕",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "어림과 정확한 계산이 넓이를 이해하는 데 서로 어떤 '구조'와 '관계'를 가지는지 설명해 보세요.", a: "*" },
+            { q: "실생활에서 넓이를 어림했다가, 나중에 정확히 계산해야 하는 사례를 하나 들고 설명해 보세요.", a: "*" },
+            { q: "정육각형, 마름모, 정사각형 등을 이용해 원의 넓이를 어림할 때 공통으로 이용되는 아이디어를 정리해 보세요.", a: "*" },
+            { q: "어림값이 너무 작거나 너무 크게 나오지 않도록 하려면 어떤 기준이 필요할지 써 보세요.", a: "*" },
+            { q: "어림을 통해 원 넓이 공식을 떠올릴 수 있는 이유를 자신의 말로 정리해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld4() {
+      return {
+        easy: [
+          {
+            name: "초급 공식정령 A",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원의 넓이 공식에 반드시 들어가는 것은 무엇인가요? (반지름/지름/원주 중 하나)",
+              a: "반지름"
+            }]
+          },
+          {
+            name: "초급 공식정령 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "다음 중 원의 넓이 공식을 올바르게 쓴 것은? ① 반지름×지름×원주율 ② 반지름×반지름×원주율 ③ 지름×지름×원주율",
+              a: "2"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 공식정령 A",
+            tier: "mid",
+            makeQuestions: () => {
+              const r = randInt(3, 8);
+              return [{
+                q: `반지름이 ${r}cm인 원의 넓이는 얼마인가요? (반지름×반지름×원주율, 원주율=3)`,
+                a: String(3 * r * r)
+              }];
+            }
+          },
+          {
+            name: "중급 공식정령 B",
+            tier: "mid",
+            makeQuestions: () => {
+              const r = randInt(4, 9);
+              const area = 3 * r * r;
+              return [{
+                q: `어떤 원의 넓이가 ${area}cm²입니다. 이 원의 반지름은 몇 cm인가요? (원주율=3)`,
+                a: String(r)
+              }];
+            }
+          }
+        ],
+        hard: [
+          {
+            name: "고급 공식정령 A",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "'반지름×반지름×원주율'이라는 구조가 넓이와 어떤 관계를 가지는지 한 문장으로 설명해 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "고급 공식정령 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "반지름이 2배가 되면 원의 넓이는 몇 배가 되는지, 공식을 이용해 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "공식의 왕",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "원의 넓이 공식을 모를 때와 알 때의 차이를 '구조'와 '관계'라는 단어를 사용해 설명해 보세요.", a: "*" },
+            { q: "원의 넓이 공식을 이용해 계산을 간단하게 만드는 예를 한 가지 들어 보세요.", a: "*" },
+            { q: "원 넓이 공식을 다른 도형(예: 직사각형) 넓이 공식과 비교해 비슷한 점과 다른 점을 설명해 보세요.", a: "*" },
+            { q: "'공식'이 있다는 것이 사고 과정에 주는 장점을 한 문장으로 정리해 보세요.", a: "*" },
+            { q: "원의 넓이 공식에서 반지름이 두 번 곱해지는 이유를 설명해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld5() {
+      return {
+        easy: [
+          {
+            name: "초급 복합도형슬라임 A",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "직사각형과 원이 함께 있을 때, 넓이를 구하는 첫 단계로 알맞은 것은? ① 모두 한꺼번에 더한다 ② 나누어 생각한다 ③ 아무 도형이나 골라서 계산한다",
+              a: "2"
+            }]
+          },
+          {
+            name: "초급 복합도형슬라임 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "복합 도형의 넓이를 구할 때 '나눈 뒤 더하거나 빼는' 이유를 짧게 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 복합도형기사 A",
+            tier: "mid",
+            makeQuestions: () => {
+              const a = randInt(6, 12);
+              const b = randInt(4, 8);
+              const r = randInt(2, 5);
+              const rect = a * b;
+              const circle = 3 * r * r;
+              return [{
+                q: `가로 ${a}cm, 세로 ${b}cm인 직사각형 안에 반지름 ${r}cm인 원 하나를 오려냈습니다. 남은 넓이는 몇 cm²인가요? (원주율=3)`,
+                a: String(rect - circle)
+              }];
+            }
+          },
+          {
+            name: "중급 복합도형기사 B",
+            tier: "mid",
+            makeQuestions: () => {
+              const r = randInt(2, 5);
+              const rect = randInt(20, 40);
+              const circle = 3 * r * r;
+              return [{
+                q: `어떤 도형의 넓이가 ${rect}cm²이고, 그 안에 반지름 ${r}cm인 원이 하나 그려져 있습니다. 전체 넓이는 ${rect + circle}cm²입니다. 원의 넓이는 몇 cm²인가요? (원주율=3)`,
+                a: String(circle)
+              }];
+            }
+          }
+        ],
+        hard: [
+          {
+            name: "고급 복합도형기사 A",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "복합 도형 넓이를 구할 때, 도형을 어떻게 바라보는 '구조적인 시각'이 필요하다고 생각하나요? 한 문장으로 써 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "고급 복합도형기사 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "복합 도형 문제에서 자주 하는 실수(예: 빼야 할 넓이를 더하는 것 등)를 하나 떠올리고, 왜 그런 실수가 생기는지 써 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "복합 도형의 군주",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "'사각형과 원을 나누고, 넓이를 더하거나 빼는 구조'를 '관계'라는 말과 함께 설명해 보세요.", a: "*" },
+            { q: "복합 도형을 나눌 때 기준이 되는 선이나 점을 어떻게 정해야 하는지 설명해 보세요.", a: "*" },
+            { q: "복합 도형 넓이 계산 과정이 알고 보면 어떤 '구조'로 반복되는지 정리해 보세요.", a: "*" },
+            { q: "복합 도형을 통해 '구조'와 '관계'를 보는 눈이 어떻게 길러지는지 서술해 보세요.", a: "*" },
+            { q: "실생활에서 복합 도형 넓이를 구해야 하는 상황을 한 가지 들어 설명해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld6() {
+      return {
+        easy: [
+          {
+            name: "초급 실생활수호자 A",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원이 등장하는 실생활 물건을 하나 적어 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "초급 실생활수호자 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원이 쓰이는 장소를 하나 떠올려 보세요. (예: 운동장, 시계 등) 그 이름을 적으세요.",
+              a: "*"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 실생활수호자 A",
+            tier: "mid",
+            makeQuestions: () => {
+              const r = randInt(4, 10);
+              return [{
+                q: `반지름이 ${r}m인 원형 화단에 잔디를 깔려 합니다. 필요한 넓이는 몇 m²인가요? (원주율=3)`,
+                a: String(3 * r * r)
+              }];
+            }
+          },
+          {
+            name: "중급 실생활수호자 B",
+            tier: "mid",
+            makeQuestions: () => {
+              const r = randInt(3, 7);
+              return [{
+                q: `반지름이 ${r}m인 원형 연못의 바닥에 방수포를 깔려고 합니다. 필요한 방수포 넓이는 몇 m²인가요? (원주율=3)`,
+                a: String(3 * r * r)
+              }];
+            }
+          }
+        ],
+        hard: [
+          {
+            name: "고급 실생활수호자 A",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "넓이를 어림하는 것과 정확히 계산하는 것이 실생활에서 어떻게 함께 쓰일 수 있는지 예를 들어 설명해 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "고급 실생활수호자 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "실생활에서 원의 넓이를 너무 작게 어림했을 때 생길 수 있는 문제를 상상해 써 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "최종 원의 군주",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "원이란, 반지름·원주율·넓이 사이의 구조와 관계를 통해 어떤 의미를 갖는 도형인지 서술해 보세요. (반드시 '구조', '관계' 단어 포함)", a: "*" },
+            { q: "원의 넓이 개념이 없다면 어떤 실생활 문제가 생길지 상상해 보고 설명해 보세요.", a: "*" },
+            { q: "원의 넓이 공식이 실생활에서 '도구'로서 어떻게 작동하는지 사례를 들어 설명해 보세요.", a: "*" },
+            { q: "원의 넓이를 학습하면서 느낀 어려움과 그것을 극복한 방식을 되돌아보며 한 문단으로 써 보세요.", a: "*" },
+            { q: "원 넓이 이해가 입체도형 학습(원기둥·원뿔·구)과 어떤 관계가 있는지 정리해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld7() {
+      return {
+        easy: [
+          {
+            name: "초급 원기둥정령 A",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원기둥의 밑면 모양은 무엇인가요? (원/삼각형/사각형 중 하나)",
+              a: "원"
+            }]
+          },
+          {
+            name: "초급 원기둥정령 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원기둥의 밑면은 몇 개인가요? (숫자로 쓰기)",
+              a: "2"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 원기둥정령 A",
+            tier: "mid",
+            makeQuestions: () => {
+              const r = randInt(2, 5);
+              const h = randInt(5, 12);
+              const circ = 2 * 3 * r;
+              return [{
+                q: `어떤 원기둥의 밑면 반지름은 ${r}cm, 높이는 ${h}cm입니다. 전개도에서 옆면 직사각형의 가로와 세로는 각각 몇 cm인가요? (원주율=3, '가로,세로' 형식으로 쓰기)`,
+                a: `${circ},${h}`
+              }];
+            }
+          },
+          {
+            name: "중급 원기둥정령 B",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "다음 중 원기둥에 대한 옳은 설명을 골라 번호만 쓰세요. ① 밑면이 1개이다. ② 옆면은 평평한 면이다. ③ 위에서 보면 모양이 원이다. ④ 꼭짓점이 있다.",
+              a: "3"
+            }]
+          }
+        ],
+        hard: [
+          {
+            name: "고급 원기둥정령 A",
+            tier: "hard",
+            makeQuestions: () => {
+              const r = randInt(2, 6);
+              const h = randInt(5, 10);
+              const side = 2 * 3 * r * h;
+              return [{
+                q: `밑면의 반지름이 ${r}cm, 높이가 ${h}cm인 원기둥의 옆면 전개도 넓이는 몇 cm²인가요? (원주율=3)`,
+                a: String(side)
+              }];
+            }
+          },
+          {
+            name: "고급 원기둥정령 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "어떤 전개도에서 밑면의 둘레와 옆면 직사각형의 한 변 길이가 서로 다를 때, 왜 원기둥을 만들 수 없는지 '구조'와 '관계'라는 말을 사용해 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "원기둥의 군주",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "원기둥에서 밑면 두 개와 옆면 하나가 이루는 구조와 관계를, 전개도를 이용해 설명해 보세요. (반드시 '구조', '관계' 단어 포함)", a: "*" },
+            { q: "원기둥의 높이와 밑면의 반지름이 변할 때, 겉넓이나 부피가 어떻게 달라질지 구조적으로 예상해 보세요.", a: "*" },
+            { q: "원기둥을 실생활 물건(예: 컵, 통조림 등)과 연결하여, 왜 이런 모양이 많이 쓰이는지 써 보세요.", a: "*" },
+            { q: "밑면이 서로 평행하고 합동인 두 원이라는 점을 기준으로, 원기둥을 다른 입체도형과 비교해 보세요.", a: "*" },
+            { q: "원기둥의 전개도에서 길이 관계가 틀렸을 때 어떤 일이 생기는지, 구조와 관계 관점에서 설명해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld8() {
+      return {
+        easy: [
+          {
+            name: "초급 원뿔요정 A",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원뿔의 밑면 모양은 무엇인가요? (원/사각형/삼각형 중 하나)",
+              a: "원"
+            }]
+          },
+          {
+            name: "초급 원뿔요정 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "원뿔의 꼭짓점은 어떤 점인가요? (옆면이 모두 모이는 한 점/밑면의 중심 중 하나)",
+              a: "옆면이 모두 모이는 한 점"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 원뿔요정 A",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "원뿔의 밑면, 옆면, 꼭짓점을 각각 한 문장으로 설명해 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "중급 원뿔요정 B",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "원뿔의 밑면 반지름이 커지면, 옆면과 꼭짓점의 모양이나 구조가 어떻게 달라질지 예상해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        hard: [
+          {
+            name: "고급 원뿔요정 A",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "원뿔에서 '모선'과 '높이'의 차이를 예를 들어 설명해 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "고급 원뿔요정 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "원기둥과 원뿔을 비교했을 때, 같은 밑면이라도 구조가 어떻게 달라지는지 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "원뿔의 군주",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "원뿔의 밑면, 옆면, 꼭짓점, 모선, 높이를 '구조'와 '관계'라는 말과 함께 한 문단으로 정리해 보세요.", a: "*" },
+            { q: "원뿔의 옆면을 전개하면 어떤 도형(부채꼴)이 되는지, 그 이유를 설명해 보세요.", a: "*" },
+            { q: "원뿔의 모선 길이가 높이와 어떻게 다른지 예를 들어 설명해 보세요.", a: "*" },
+            { q: "원기둥과 원뿔의 부피를 비교했을 때, 왜 원뿔의 부피가 더 작을지 구조적으로 예상해 보세요.", a: "*" },
+            { q: "원뿔을 평면도형(원)과 입체도형 사이의 관계로 설명해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    function waveWorld9() {
+      return {
+        easy: [
+          {
+            name: "초급 구정령 A",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "구에서 중심은 어떤 점인가요? (한 문장 또는 짧은 말로)",
+              a: "*"
+            }]
+          },
+          {
+            name: "초급 구정령 B",
+            tier: "easy",
+            makeQuestions: () => [{
+              q: "구에는 밑면이 있을까요? (예/아니오)",
+              a: "아니오"
+            }]
+          }
+        ],
+        mid: [
+          {
+            name: "중급 구정령 A",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "구에서 반지름은 무엇과 무엇 사이의 거리인가요? (중심과 겉면/밑면과 옆면 중 하나 적기)",
+              a: "중심과 겉면"
+            }]
+          },
+          {
+            name: "중급 구정령 B",
+            tier: "mid",
+            makeQuestions: () => [{
+              q: "구는 어느 방향에서 보아도 모양이 같은데, 이것이 갖는 수학적 의미를 짧게 설명해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        hard: [
+          {
+            name: "고급 구정령 A",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "어떤 평면도형을 회전시키면 구가 되는지, 그리고 왜 그런지 '구조'와 '관계' 단어를 넣어 설명해 보세요.",
+              a: "*"
+            }]
+          },
+          {
+            name: "고급 구정령 B",
+            tier: "hard",
+            makeQuestions: () => [{
+              q: "구의 중심과 반지름 개념이 입체도형의 부피 학습과 어떤 관계가 있을지 예상해 보세요.",
+              a: "*"
+            }]
+          }
+        ],
+        boss: {
+          name: "구의 군주",
+          tier: "boss",
+          makeQuestions: () => [
+            { q: "구에서 밑면·옆면 대신 중심과 반지름이 중요한 이유를 '구조'와 '관계'라는 단어를 넣어 정리해 보세요.", a: "*" },
+            { q: "구를 다른 입체도형(예: 원기둥·원뿔)과 비교했을 때, 어떤 점에서 가장 단순한 구조인지 설명해 보세요.", a: "*" },
+            { q: "구의 겉모습이 어느 방향에서 보아도 같다는 사실이 어떤 수학적 의미를 가지는지 써 보세요.", a: "*" },
+            { q: "구를 생성하는 평면도형(반원)을 회전한다는 관점에서, 회전과 거리의 관계를 설명해 보세요.", a: "*" },
+            { q: "구의 중심과 반지름 개념이 실생활(예: 공, 지구 모형 등)에서 어떻게 쓰이는지 정리해 보세요.", a: "*" }
+          ]
+        }
+      };
+    }
+
+    // ---------- 타이머 (필드에서 20초마다 HP 2 감소) ----------
+    function startTimer() {
+      stopTimer();
+      state.lastTick = performance.now();
+      state.timerId = requestAnimationFrame(timerLoop);
+    }
+    function stopTimer() {
+      if (state.timerId) cancelAnimationFrame(state.timerId);
+      state.timerId = null;
+    }
+    function timerLoop(now) {
+      if (!state.lastTick) state.lastTick = now;
+      const elapsed = now - state.lastTick;
+      if (elapsed >= 20000 && state.stage === "field") {
+        state.lastTick = now;
+        damage(2, "시간 경과로 체력이 2 깎였습니다.");
+      }
+      if (state.timerId) state.timerId = requestAnimationFrame(timerLoop);
+    }
+
+    // ---------- 메인 UI ----------
+    const screenEl = document.getElementById("screen");
+
+    function showIntro() {
+      stopTimer();
+      state.stage = "intro";
+      screenEl.innerHTML = `
+        <h1>수학 RPG – 원 · 원기둥 · 원뿔 · 구 월드</h1>
+        <p class="subtitle">닉네임을 입력하고 수학 월드를 모험하세요.</p>
+        <label>닉네임</label>
+        <input id="nameInput" type="text" placeholder="예: 6-3 원마스터" />
+        <div class="btn-row">
+          <button onclick="onStart()">게임 시작</button>
+        </div>
+      `;
+    }
+
+    function onStart() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) { alert("닉네임을 입력해 주세요."); return; }
+      state.name = name;
+      resetStats();
+      WORLDS.forEach(w=>{
+        state.worldProgress[w.id] = { unlocked:true, cleared:false };
+      });
+      showWorldMap();
+    }
+    window.onStart = onStart;
+
+    function showWorldMap() {
+      stopTimer();
+      state.stage = "map";
+      let html = `
+        <h2>월드 맵</h2>
+        <p class="subtitle">아무 월드나 자유롭게 선택해서 플레이할 수 있습니다.</p>
+        <div class="world-map">
+      `;
+      WORLDS.forEach(w=>{
+        const prog = state.worldProgress[w.id] || {unlocked:true, cleared:false};
+        const badge = prog.cleared
+          ? '<span class="badge green">✅ 클리어</span>'
+          : '<span class="badge yellow">● 도전 가능</span>';
+        html += `
+          <div class="world-node">
+            <div class="world-title">${w.title}</div>
+            <div class="world-status">${badge}</div>
+            <button class="secondary" onclick="enterWorld('${w.id}')">이 월드로 이동</button>
+          </div>
+        `;
+      });
+      html += `</div><div class="log" id="logArea">${state.log.map(x=>"• "+x).join("<br>")}</div>`;
+      screenEl.innerHTML = html;
+    }
+    window.enterWorld = function(id) {
+      state.currentWorldId = id;
+      const w = WORLDS.find(x=>x.id===id);
+      showWorldIntro(w);
+    };
+
+    function showWorldIntro(world) {
+      stopTimer();
+      state.stage = "quest";
+      let html = `
+        <h2>${world.title}</h2>
+        <p class="subtitle">BIG 탐구 질문</p>
+        <div class="question-box">${world.big}</div>
+        <p class="subtitle">탐구퀘스트를 모두 작성한 후 필드로 입장하세요.</p>
+      `;
+      world.quest.forEach((q,i)=>{
+        html += `
+          <label>Q${i+1}. ${q}</label>
+          <textarea id="quest${i}"></textarea>
+        `;
+      });
+      html += `
+        <label><input type="checkbox" id="chkTeacher" /> 선생님께 확인받았습니다.</label>
+        <div class="btn-row">
+          <button onclick="onQuestDone()">탐구퀘스트 완료</button>
+          <button class="secondary" onclick="showWorldMap()">월드 맵으로</button>
+        </div>
+        <div class="log" id="logArea">${state.log.map(x=>"• "+x).join("<br>")}</div>
+      `;
+      screenEl.innerHTML = html;
+    }
+
+    window.onQuestDone = function() {
+      const world = WORLDS.find(x=>x.id===state.currentWorldId);
+      if (!document.getElementById("chkTeacher").checked) {
+        alert("선생님께 확인받았다면 체크해 주세요.");
+        return;
+      }
+      for (let i=0;i<world.quest.length;i++){
+        const v = document.getElementById("quest"+i).value.trim();
+        if (!v) { alert("모든 탐구퀘스트에 답을 적어 주세요."); return; }
+      }
+      logMsg(`${world.title} 탐구퀘스트 완료! 필드에 입장합니다.`);
+      startField(world);
+    };
+
+    // ---------- 필드 & 웨이브 ----------
+    function startField(world) {
+      state.stage = "field";
+      state.player.x = 100;
+      state.player.y = 180;
+      state.waveTemplates = world.monsters();
+      startWave("easy");
+    }
+
+    function startWave(tier) {
+      state.currentWave = tier;
+      state.monsters = [];
+      const wt = state.waveTemplates;
+      let templates;
+      if (tier === "boss") {
+        templates = [wt.boss];
+      } else {
+        templates = wt[tier] || [];
+      }
+      const count = (tier === "boss") ? 1 : 5;
+      for (let i=0;i<count;i++) {
+        const t = templates[randInt(0, templates.length-1)];
+        const m = {
+          id: `${tier}_${i}_${Date.now()}_${Math.random()}`,
+          name: t.name,
+          tier: t.tier,
+          template: t,
+          alive: true,
+          x: randInt(60, 620),
+          y: randInt(40, 300)
+        };
+        state.monsters.push(m);
+      }
+      renderField();
+      startTimer();
+    }
+
+    function renderField() {
+      const world = WORLDS.find(x=>x.id===state.currentWorldId);
+      let infoText = "";
+      if (state.stage === "field") {
+        infoText = "방향키로 이동하고, 몬스터에 가까이 가서 스페이스바를 눌러 전투를 시작하세요.";
+      } else if (state.stage === "battle") {
+        infoText = "문제를 풀어 몬스터를 처치하세요!";
+      }
+
+      let html = `
+        <h2>${world.title}</h2>
+        <p class="subtitle">${world.big}</p>
+        <div class="btn-row">
+          <button class="secondary" onclick="changeWave('easy')">초급 사냥터</button>
+          <button class="secondary" onclick="changeWave('mid')">중급 사냥터</button>
+          <button class="secondary" onclick="changeWave('hard')">고급 사냥터</button>
+          <button class="secondary" onclick="changeWave('boss')">보스 방</button>
+          <button class="secondary" onclick="showWorldMap()">월드 맵으로</button>
+        </div>
+        <p class="subtitle">${infoText}</p>
+        <div class="field" id="fieldArea"></div>
+      `;
+
+      if (state.stage === "battle" && state.battle) {
+        const b = state.battle;
+        const q = b.questions[b.index];
+        html += `
+          <div class="question-box" style="margin-top:10px;">
+            <strong>[전투 중] ${b.isBoss ? "보스" : "몬스터"} 문제 ${b.index+1}/${b.questions.length}</strong><br><br>
+            ${q.q}
+          </div>
+          <input id="answerInput" type="text" placeholder="정답을 입력하세요" />
+          <div class="btn-row">
+            <button onclick="submitAnswer()">정답 제출</button>
+          </div>
+          <p class="hint">* 숫자 문제는 숫자만, 설명 문제는 간단한 문장으로 적으면 됩니다.</p>
+        `;
+      } else {
+        html += `<p class="hint">* 아직 전투 중이 아닙니다. 몬스터에게 다가가 스페이스바를 눌러 보세요.</p>`;
+      }
+
+      html += `<div class="log" id="logArea">${state.log.map(x=>"• "+x).join("<br>")}</div>`;
+      screenEl.innerHTML = html;
+
+      const field = document.getElementById("fieldArea");
+      if (!field) return;
+
+      // 플레이어
+      const pDiv = document.createElement("div");
+      pDiv.className = "player";
+      pDiv.style.left = state.player.x + "px";
+      pDiv.style.top = state.player.y + "px";
+      field.appendChild(pDiv);
+
+      // 몬스터
+      state.monsters.forEach(m=>{
+        const mDiv = document.createElement("div");
+        mDiv.className = "monster " + (m.tier === "boss" ? "boss" : m.tier);
+        if (!m.alive) mDiv.classList.add("dead");
+        mDiv.style.left = m.x + "px";
+        mDiv.style.top = m.y + "px";
+        const face = document.createElement("span");
+        face.textContent = m.tier === "boss" ? "😈" : "😺";
+        mDiv.appendChild(face);
+        const label = document.createElement("div");
+        label.className = "monster-label";
+        label.textContent = m.name;
+        mDiv.appendChild(label);
+        field.appendChild(mDiv);
+      });
+    }
+
+    window.changeWave = function(tier) {
+      if (!state.waveTemplates) return;
+      startWave(tier);
+      logMsg(`${tier.toUpperCase()} 사냥터에 입장했습니다.`);
+    };
+
+    // ---------- 전투 ----------
+    function startBattleWith(monster) {
+      if (!monster.alive) {
+        logMsg("이미 쓰러진 몬스터입니다.");
+        return;
+      }
+      const qs = monster.template.makeQuestions();
+      state.battle = {
+        monsterId: monster.id,
+        isBoss: (monster.tier === "boss"),
+        tier: monster.tier,
+        questions: qs,
+        index: 0
+      };
+      state.stage = "battle";
+      renderField();
+      const input = document.getElementById("answerInput");
+      if (input) input.focus();
+    }
+
+    window.submitAnswer = function() {
+      if (!state.battle) return;
+      const b = state.battle;
+      const q = b.questions[b.index];
+      const input = document.getElementById("answerInput");
+      if (!input) return;
+      const ans = input.value.trim();
+      if (!ans) { alert("정답을 입력해 주세요."); return; }
+
+      let correct = false;
+      if (q.a === "*") {
+        // 개방형: 아무 말이나 적으면 정답 처리
+        correct = ans.length > 0;
+      } else {
+        if (ans === q.a) correct = true;
+      }
+
+      if (!correct) {
+        damage(b.isBoss ? 3 : 2, "오답으로 인해 체력이 깎였습니다.");
+        return;
+      }
+
+      // 정답일 때
+      if (b.index < b.questions.length - 1) {
+        b.index += 1;
+        logMsg("정답! 다음 문제로 넘어갑니다.");
+        renderField();
+        const input2 = document.getElementById("answerInput");
+        if (input2) input2.focus();
+        return;
+      }
+
+      // 마지막 문제까지 해결 -> 몬스터 처치
+      const monster = state.monsters.find(m=>m.id === b.monsterId);
+      if (monster) {
+        monster.alive = false;
+        if (b.isBoss) rewardBossKill();
+        else rewardNormalKill(b.tier);
+      }
+      state.battle = null;
+      state.stage = "field";
+      logMsg("몬스터를 처치했습니다!");
+      renderField();
+    };
+
+    // ---------- 키보드 이동 & 충돌 ----------
+    document.addEventListener("keydown", (e)=>{
+      if (state.stage !== "field") return;
+      const step = state.player.step;
+      let moved = false;
+      if (e.key === "ArrowUp") { state.player.y -= step; moved = true; }
+      else if (e.key === "ArrowDown") { state.player.y += step; moved = true; }
+      else if (e.key === "ArrowLeft") { state.player.x -= step; moved = true; }
+      else if (e.key === "ArrowRight") { state.player.x += step; moved = true; }
+      else if (e.key === " ") {
+        e.preventDefault();
+        handleSpaceBattle();
+        return;
+      }
+
+      if (moved) {
+        // 필드 범위 제한
+        state.player.x = Math.max(10, Math.min(650, state.player.x));
+        state.player.y = Math.max(10, Math.min(320, state.player.y));
+        renderField();
+      }
+    });
+
+    function handleSpaceBattle() {
+      if (state.monsters.length === 0) {
+        logMsg("현재 필드에 몬스터가 없습니다.");
+        return;
+      }
+      let nearest = null;
+      let bestDist = Infinity;
+      state.monsters.forEach(m=>{
+        if (!m.alive) return;
+        const dx = m.x - state.player.x;
+        const dy = m.y - state.player.y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < bestDist) {
+          bestDist = d;
+          nearest = m;
+        }
+      });
+      if (!nearest || bestDist > 50) {
+        logMsg("몬스터에 더 가까이 가서 스페이스바를 눌러 보세요.");
+        return;
+      }
+      startBattleWith(nearest);
+    }
+
+    // ---------- 시작 ----------
+    showIntro();
+    updateHUD();
+  </script>
+</body>
+</html>
+
+
